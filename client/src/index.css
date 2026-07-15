@@ -1,0 +1,843 @@
+/* ─── bpmn-js CSS imports ─────────────────────────────────── */
+@import 'bpmn-js/dist/assets/diagram-js.css';
+@import 'bpmn-js/dist/assets/bpmn-js.css';
+@import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
+@import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Global Overrides ────────────────────────────────────── */
+:root {
+  --app-h: 100vh; /* overridden at runtime in main.tsx to window.innerHeight */
+}
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* ─── App Header ──────────────────────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 48px;
+  line-height: 48px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.version-badge {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.dirty-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f97316;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes row-highlight {
+  0% { background-color: #bae7ff; }
+  100% { background-color: transparent; }
+}
+
+.row-just-created td {
+  animation: row-highlight 2.5s ease-out;
+}
+
+.toolbar-btn {
+  color: #94a3b8 !important;
+  transition: all 0.15s;
+}
+.toolbar-btn:hover {
+  color: #e2e8f0 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 4px;
+}
+
+.bpmn-ribbon {
+  border-right: 1px solid #cbd5e1;
+  background:
+    linear-gradient(180deg, rgba(226, 232, 240, 0.95) 0%, rgba(241, 245, 249, 0.98) 100%);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.45);
+}
+
+.bpmn-ribbon-group {
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(226, 232, 240, 0.92) 100%);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.bpmn-ribbon-title {
+  color: #475569;
+}
+
+.bpmn-ribbon-btn {
+  color: #334155 !important;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96) 0%, rgba(226, 232, 240, 0.96) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 1px 2px rgba(15, 23, 42, 0.08);
+  transition: all 0.15s;
+}
+
+.bpmn-ribbon-btn:hover,
+.bpmn-ribbon-btn:focus {
+  color: #0f172a !important;
+  background: linear-gradient(180deg, rgba(219, 234, 254, 0.98) 0%, rgba(191, 219, 254, 0.98) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 3px 8px rgba(59, 130, 246, 0.2);
+}
+
+.bpmn-ribbon-btn.ant-btn-primary {
+  color: #eff6ff !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 4px 10px rgba(37, 99, 235, 0.3);
+}
+
+.bpmn-ribbon-btn.ant-btn-primary:hover,
+.bpmn-ribbon-btn.ant-btn-primary:focus {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%) !important;
+}
+
+.bpmn-ribbon-btn.ant-btn[disabled],
+.bpmn-ribbon-btn.ant-btn[disabled]:hover {
+  color: #94a3b8 !important;
+  background: rgba(226, 232, 240, 0.65) !important;
+  box-shadow: none;
+}
+
+/* ─── BPMN Canvas Area ────────────────────────────────────── */
+.bpmn-content {
+  position: relative;
+  background: #f8fafc;
+  min-height: 0;  /* critical for flex child to shrink */
+  flex: 1;
+  height: calc(var(--app-h) - 48px); /* viewport minus header */
+  overflow: hidden;
+}
+
+/* ─── Factory Tabs ─────────────────────────────────────────── */
+.factory-tabs {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.factory-tabs .ant-tabs-content {
+  flex: 1;
+  height: 100%;
+}
+.factory-tabs .ant-tabs-content .ant-tabs-tabpane {
+  height: 100%;
+  position: relative;
+}
+.factory-tabs .ant-tabs-nav {
+  margin-bottom: 0 !important;
+  padding: 4px 8px 0;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Prevent table rows from being clipped in nested tabs/cards.
+   We cap table body height to a safe viewport-based value and always allow scrolling. */
+.factory-tabs .ant-table-wrapper,
+.factory-tabs .ant-spin-nested-loading,
+.factory-tabs .ant-spin-container,
+.factory-tabs .ant-table,
+.factory-tabs .ant-table-container {
+  min-height: 0;
+}
+
+.factory-tabs .ant-table-body {
+  max-height: calc(100dvh - 360px) !important;
+  overflow-y: auto !important;
+  padding-bottom: 180px;
+  scroll-padding-bottom: 180px;
+  box-sizing: border-box;
+}
+
+.factory-tabs.model-factory-tabs .ant-table-body {
+  max-height: calc(100dvh - 420px) !important;
+}
+
+.component-rows-table .ant-table-body {
+  overflow-y: auto !important;
+  padding-bottom: 180px;
+  scroll-padding-bottom: 180px;
+  box-sizing: border-box;
+}
+
+.component-rows-table.component-rows-table--nested .ant-table-body {
+  max-height: calc(100dvh - 590px) !important;
+}
+
+/* ─── Components Table View (for tree/table toggle) ──────────── */
+.components-table-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+}
+
+.components-table-view .ant-tabs-content {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+.components-table-view .ant-tabs-content-holder {
+  height: 100%;
+}
+
+.components-table-view .ant-tabs-tabpane {
+  height: 100%;
+}
+
+/* ─── Spin Component (flex-aware) ──────────────────────────── */
+/* Make Spin containers properly respect flex sizing for tree views */
+.ant-spin-nested-loading {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.ant-spin-nested-loading > .ant-spin-container {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: inherit !important;
+}
+
+/* Give all scrollable list/table bodies extra room below the final row.
+   This keeps the last item from sitting flush against the bottom edge of the scroller. */
+.ant-table-body,
+.ant-list .ant-list-items,
+.ant-list .ant-list-item {
+  scroll-padding-bottom: 180px;
+}
+
+.ant-list .ant-list-items {
+  padding-bottom: 180px;
+  box-sizing: border-box;
+}
+
+.ant-table-body {
+  padding-bottom: 180px;
+  box-sizing: border-box;
+}
+
+.model-factory-tabs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.model-factory-tabs .ant-tabs-content {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+.model-factory-tabs .ant-tabs-content-holder {
+  height: 100%;
+}
+
+.model-factory-tabs .ant-tabs-tabpane {
+  height: 100%;
+}
+
+.model-factory-tabs .ant-tabs-tab {
+  margin: 0 !important;
+  margin-right: -1px !important;
+  border: 1px solid #c9e6f5 !important;
+  border-bottom: none !important;
+  background: #d1e9f4 !important;
+  border-radius: 6px 6px 0 0 !important;
+  padding: 8px 16px !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+  z-index: 1 !important;
+  color: #000 !important;
+  border-top: 3px solid #4f46e5 !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.model-factory-tabs .ant-tabs-tab-active {
+  background: #a8d8f0 !important;
+  border-color: #7bc4e8 !important;
+  z-index: 10 !important;
+  font-weight: 700 !important;
+  color: #1e40af !important;
+}
+
+.model-factory-tabs .ant-tabs-tab:not(.ant-tabs-tab-active):hover {
+  background: #d7ecf8 !important;
+}
+
+.model-factory-tabs .ant-tabs-tab[data-node-key^="sep-"] {
+  border-top: 3px solid transparent !important;
+  background: transparent !important;
+}
+
+.model-factory-tabs .ant-tabs-tab[data-node-key^="sep-"]:hover {
+  background: transparent !important;
+}
+
+/* ─── Neighborhood Tabs Styling ───────────────────────────── */
+.neighborhood-tabs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.neighborhood-tabs .ant-tabs-content {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+.neighborhood-tabs .ant-tabs-content-holder {
+  height: 100%;
+}
+
+.neighborhood-tabs .ant-tabs-tabpane {
+  height: 100%;
+}
+
+.neighborhood-tabs .ant-tabs-nav {
+  gap: 0 !important;
+}
+
+.neighborhood-tabs .ant-tabs-tab {
+  margin: 0 !important;
+  margin-right: -1px !important;
+  border: 1px solid #c9e6f5 !important;
+  border-bottom: none !important;
+  background: #d1e9f4 !important;
+  border-radius: 6px 6px 0 0 !important;
+  padding: 8px 16px !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+  z-index: 1 !important;
+  color: #000 !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.neighborhood-tabs .ant-tabs-tab:hover {
+  background: #d7ecf8 !important;
+  z-index: 2 !important;
+}
+
+.neighborhood-tabs .ant-tabs-tab-active {
+  background: #a8d8f0 !important;
+  border-color: #7bc4e8 !important;
+  z-index: 10 !important;
+  font-weight: 700 !important;
+  color: #1e40af !important;
+}
+
+.neighborhood-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #1e40af !important;
+}
+
+/* ── Tab groups: colored top stripe per group ───────────── */
+
+/* BASE: Factory tabs — AT&T light blue */
+.factory-tabs .ant-tabs-tab {
+  margin: 0 !important;
+  margin-right: -1px !important;
+  border: 1px solid #c9e6f5 !important;
+  border-bottom: none !important;
+  background: #d1e9f4 !important;
+  border-radius: 6px 6px 0 0 !important;
+  padding: 8px 16px !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+  z-index: 1 !important;
+  color: #000 !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.factory-tabs .ant-tabs-tab:hover {
+  background: #d7ecf8 !important;
+  z-index: 2 !important;
+}
+
+.factory-tabs .ant-tabs-tab-active {
+  background: #a8d8f0 !important;
+  border-color: #7bc4e8 !important;
+  z-index: 10 !important;
+  font-weight: 700 !important;
+  color: #1e40af !important;
+}
+
+.factory-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #1e40af !important;
+}
+
+/* GROUP: Canvas — cyan */
+.factory-tabs .ant-tabs-tab[data-node-key="bpmn"] {
+  border-top: 3px solid #0891b2 !important;
+}
+.factory-tabs .ant-tabs-tab-active[data-node-key="bpmn"] {
+  background: #a8d8f0 !important;
+  color: #1e40af !important;
+  font-weight: 700 !important;
+}
+.factory-tabs .ant-tabs-tab[data-node-key="bpmn"]:not(.ant-tabs-tab-active):hover {
+  background: #d7ecf8 !important;
+}
+
+/* GROUP: Factories — indigo */
+.factory-tabs .ant-tabs-tab[data-node-key="diagramFactory"],
+.factory-tabs .ant-tabs-tab[data-node-key="tasks"],
+.factory-tabs .ant-tabs-tab[data-node-key="applications"],
+.factory-tabs .ant-tabs-tab[data-node-key="servers"],
+.factory-tabs .ant-tabs-tab[data-node-key="databases"],
+.factory-tabs .ant-tabs-tab[data-node-key="capabilities"],
+.factory-tabs .ant-tabs-tab[data-node-key="actors"],
+.factory-tabs .ant-tabs-tab[data-node-key="businessFlows"],
+.factory-tabs .ant-tabs-tab[data-node-key="products"],
+.factory-tabs .ant-tabs-tab[data-node-key="linesOfBusiness"],
+.factory-tabs .ant-tabs-tab[data-node-key="channels"],
+.factory-tabs .ant-tabs-tab[data-node-key="domains"],
+.factory-tabs .ant-tabs-tab[data-node-key="subdomains"] {
+  border-top: 3px solid #4f46e5 !important;
+}
+.factory-tabs .ant-tabs-tab-active[data-node-key="diagramFactory"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="tasks"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="applications"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="servers"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="databases"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="capabilities"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="actors"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="businessFlows"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="products"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="linesOfBusiness"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="channels"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="domains"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="subdomains"] {
+  background: #a8d8f0 !important;
+  color: #1e40af !important;
+  font-weight: 700 !important;
+}
+.factory-tabs .ant-tabs-tab[data-node-key="diagramFactory"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="tasks"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="applications"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="servers"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="databases"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="capabilities"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="actors"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="businessFlows"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="products"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="linesOfBusiness"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="channels"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="domains"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="subdomains"]:not(.ant-tabs-tab-active):hover {
+  background: #d7ecf8 !important;
+}
+
+/* GROUP: Analytics — amber */
+.factory-tabs .ant-tabs-tab[data-node-key="dashboard"],
+.factory-tabs .ant-tabs-tab[data-node-key="reports"] {
+  border-top: 3px solid #d97706 !important;
+}
+.factory-tabs .ant-tabs-tab-active[data-node-key="dashboard"],
+.factory-tabs .ant-tabs-tab-active[data-node-key="reports"] {
+  background: #a8d8f0 !important;
+  color: #1e40af !important;
+  font-weight: 700 !important;
+}
+.factory-tabs .ant-tabs-tab[data-node-key="dashboard"]:not(.ant-tabs-tab-active):hover,
+.factory-tabs .ant-tabs-tab[data-node-key="reports"]:not(.ant-tabs-tab-active):hover {
+  background: #d7ecf8 !important;
+}
+
+/* Separator tabs: purely decorative, no interaction */
+.factory-tabs .ant-tabs-tab[data-node-key^="sep-"] {
+  border-top: 3px solid transparent !important;
+  background: transparent !important;
+  cursor: default !important;
+  pointer-events: none !important;
+  padding: 0 2px !important;
+  margin: 0 2px !important;
+  min-width: 0 !important;
+}
+.factory-tabs .ant-tabs-tab[data-node-key^="sep-"]:hover {
+  background: transparent !important;
+}
+.factory-tabs .ant-tabs-tab[data-node-key^="sep-"] .ant-tabs-tab-btn {
+  cursor: default !important;
+  color: #94a3b8 !important;
+}
+
+/* The canvas MUST fill the entire container vertically.
+   This ensures the bpmn-js palette (left tool column) is fully visible. */
+.bpmn-canvas {
+  position: absolute !important;
+  inset: 0;
+}
+.bpmn-canvas > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Give the bpmn-js left palette enough room */
+.djs-palette {
+  top: 12px !important;
+  left: 12px !important;
+}
+
+/* Properties panel scroll */
+.properties-panel-container {
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────── */
+.sidebar-panel {
+  background: #ffffff !important;
+  border-left: 1px solid #e5e7eb !important;
+  padding: 12px !important;
+  overflow: hidden !important;
+}
+.sidebar-panel .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebar-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.sidebar-card .ant-card-body {
+  padding: 12px;
+}
+.sidebar-card .ant-card-head {
+  padding: 8px 12px;
+  min-height: auto;
+  border-bottom-color: #f3f4f6;
+}
+
+/* Make the MongoDB card fill remaining space */
+.sidebar-panel .ant-card:last-child {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-panel .ant-card:last-child .ant-card-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Force the diagram list scroll container to fill and scroll */
+.sidebar-panel .ant-card:last-child .ant-list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Diagram List Items ──────────────────────────────────── */
+.diagram-list-item {
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+.diagram-list-item:hover {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+}
+.diagram-list-item.active {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  border-left: 3px solid #3b82f6;
+}
+
+/* ─── Capability Match Items ──────────────────────────────── */
+.capability-match-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+.capability-match-item:hover {
+  background-color: #f5f3ff;
+  border-color: #e9d5ff;
+}
+.capability-match-item.selected {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+  border-left: 3px solid #22c55e;
+}
+
+/* ─── Component Search AutoComplete ──────────────────────── */
+/* Only show green styling when search is active (has search text) */
+.component-search-active .ant-select-dropdown .ant-select-item:nth-child(odd) {
+  background-color: #f0fdf4 !important;
+}
+
+.component-search-active .ant-select-dropdown .ant-select-item:nth-child(even) {
+  background-color: #e7fcef !important;
+}
+
+.component-search-active .ant-select-dropdown .ant-select-item:hover {
+  background-color: #dcfce7 !important;
+}
+
+.component-search-active .ant-select-dropdown .ant-select-item-option {
+  padding: 8px 12px !important;
+}
+
+.component-search-active .ant-select-dropdown .ant-select-item-option-content {
+  border-radius: 4px;
+}
+
+/* AutoComplete uses similar structure but also these classes */
+.component-search-active .ant-select-item-option:nth-child(odd) {
+  background-color: #f0fdf4 !important;
+}
+
+.component-search-active .ant-select-item-option:nth-child(even) {
+  background-color: #e7fcef !important;
+}
+
+.component-search-active .ant-select-item-option:hover {
+  background-color: #dcfce7 !important;
+}
+
+/* Prevent header rows from being highlighted as selectable */
+.component-search-active [data-value='components-header'],
+.component-search-active [data-value='tree-header'] {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.component-search-active [data-value='components-header']:hover,
+.component-search-active [data-value='tree-header']:hover {
+  background-color: transparent !important;
+}
+
+/* ─── View Mode Toggle (Tree/Table) ─────────────────────── */
+.view-mode-toggle .ant-segmented-group {
+  background: transparent !important;
+  border: 1px solid #c9e6f5 !important;
+  border-radius: 6px !important;
+  padding: 2px !important;
+}
+
+.view-mode-toggle .ant-segmented-item {
+  background: #e8f4fb !important;
+  color: #000 !important;
+  border: 1px solid #c9e6f5 !important;
+  border-radius: 4px !important;
+  margin: 0 2px !important;
+  transition: all 0.2s ease !important;
+}
+
+.view-mode-toggle .ant-segmented-item:hover:not(.ant-segmented-item-selected) {
+  background: #d7ecf8 !important;
+}
+
+.view-mode-toggle .ant-segmented-item-selected {
+  background: #a8d8f0 !important;
+  color: #1e40af !important;
+  font-weight: 700 !important;
+  border-color: #7bc4e8 !important;
+  box-shadow: 0 2px 4px rgba(30, 64, 175, 0.15) !important;
+}
+
+/* ─── General Segmented Controls (Table/Tree, Layout toggles) ─── */
+.ant-segmented:not(.view-mode-toggle) .ant-segmented-group {
+  background: transparent !important;
+  border: 1px solid #c9e6f5 !important;
+  border-radius: 6px !important;
+  padding: 2px !important;
+}
+
+.ant-segmented:not(.view-mode-toggle) .ant-segmented-item {
+  background: #e8f4fb !important;
+  color: #000 !important;
+  border: 1px solid #c9e6f5 !important;
+  border-radius: 4px !important;
+  margin: 0 2px !important;
+  transition: all 0.2s ease !important;
+}
+
+.ant-segmented:not(.view-mode-toggle) .ant-segmented-item:hover:not(.ant-segmented-item-selected) {
+  background: #d7ecf8 !important;
+}
+
+.ant-segmented:not(.view-mode-toggle) .ant-segmented-item-selected {
+  background: #a8d8f0 !important;
+  color: #1e40af !important;
+  font-weight: 700 !important;
+  border-color: #7bc4e8 !important;
+  box-shadow: 0 2px 4px rgba(30, 64, 175, 0.15) !important;
+}
+
+/* ─── Ant Design Layout overrides ─────────────────────────── */
+.ant-layout {
+  height: 100%;
+}
+.ant-layout .ant-layout {
+  height: calc(var(--app-h) - 48px);
+  overflow: hidden;
+}
+.ant-layout-content {
+  min-height: 0;
+  flex: 1;
+}
+
+/* ─── Model Panel Action Buttons ───────────────────────────── */
+.btn-create-model {
+  background: #1890ff !important;
+  color: white !important;
+  border: none !important;
+  font-size: 10px !important;
+  padding: 2px 8px !important;
+  height: 20px !important;
+  line-height: 20px !important;
+}
+.btn-create-model:hover {
+  background: #0050b3 !important;
+}
+.btn-import-framework {
+  background: #106ebe !important;
+  font-size: 14px !important;
+  padding: 0 7px !important;
+  height: 24px !important;
+  line-height: 22px !important;
+}
+
+.btn-bulk-import {
+  background: #10b981 !important;
+  color: white !important;
+  border: none !important;
+  font-size: 10px !important;
+  padding: 2px 8px !important;
+  height: 20px !important;
+  line-height: 20px !important;
+}
+.btn-bulk-import:hover {
+  background: #059669 !important;
+}
+
+/* ─── Model Panel Small Button Sizing (30% reduction) ─────── */
+.model-action-buttons .ant-btn-sm,
+.neighborhood-header-actions .ant-btn {
+  font-size: 11.2px !important;
+  padding: 3.5px 11.2px !important;
+  height: 22.4px !important;
+  line-height: 22.4px !important;
+}
+
+/* ─── Table Header Styling ────────────────────────────────── */
+.ant-table-thead > tr > th {
+  background: #e0f2fe !important;
+  color: #0c4a6e !important;
+  font-weight: 600 !important;
+  border: 1px solid #7dd3fc !important;
+}
+
+.ant-table-thead > tr > th:hover {
+  background: #cce7fa !important;
+}
+
+.ant-table-tbody > tr > td {
+  border: 1px solid #e0f2fe !important;
+}
+
+/* ─── Scrollbar Styling ────────────────────────────────────── */
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 5px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Firefox */
+* {
+  scrollbar-color: #cbd5e1 #f5f5f5;
+  scrollbar-width: thin;
+}
+
+/* ─── Search Results Container ─────────────────────────────── */
+.component-search-results {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.component-search-results::-webkit-scrollbar {
+  width: 10px;
+}
+
+.component-search-results::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+.component-search-results::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 5px;
+}
+
+.component-search-results::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
