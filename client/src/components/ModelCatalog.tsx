@@ -117,6 +117,7 @@ function ModelCatalog({ modelName, requestedSearch = null }: ModelCatalogProps) 
   const [loadedChildKeys, setLoadedChildKeys] = useState<Set<string>>(new Set());
   const [treeSearchText, setTreeSearchText] = useState('');
   const [treeSearchResults, setTreeSearchResults] = useState<CatalogTreeNode[] | null>(null);
+  const [treeSearchMatchCount, setTreeSearchMatchCount] = useState<number | null>(null);
   const treeLoadedModelRef = useRef<string | null>(null);
   const horizontalTreeContainerRef = useRef<HTMLDivElement>(null);
   const horizontalTreeNodeRefMap = useRef<Map<React.Key, HTMLButtonElement>>(new Map());
@@ -400,6 +401,7 @@ function ModelCatalog({ modelName, requestedSearch = null }: ModelCatalogProps) 
     setTreeLoading(true);
     setTreeSearchText('');
     setTreeSearchResults(null);
+    setTreeSearchMatchCount(null);
     setLoadedChildKeys(new Set());
     setExpandedKeys([]);
 
@@ -431,6 +433,7 @@ function ModelCatalog({ modelName, requestedSearch = null }: ModelCatalogProps) 
     setTreeRoots([]);
     setTreeSearchResults(null);
     setTreeSearchText('');
+    setTreeSearchMatchCount(null);
   }, [modelName]);
 
   // Lazily fetch children for a node (used only in lazy tree mode).
@@ -458,6 +461,7 @@ function ModelCatalog({ modelName, requestedSearch = null }: ModelCatalogProps) 
     const term = treeSearchText.trim();
     if (!term) {
       setTreeSearchResults(null);
+      setTreeSearchMatchCount(null);
       return;
     }
     let cancelled = false;
@@ -467,6 +471,7 @@ function ModelCatalog({ modelName, requestedSearch = null }: ModelCatalogProps) 
         if (cancelled) return;
         const roots = buildTreeFromPaths(resp.paths || []);
         setTreeSearchResults(roots);
+        setTreeSearchMatchCount(resp.paths?.length || 0);
         // Expand everything in the search result set.
         const keys: React.Key[] = [];
         const collect = (list: CatalogTreeNode[]) => list.forEach((n) => {
@@ -474,10 +479,14 @@ function ModelCatalog({ modelName, requestedSearch = null }: ModelCatalogProps) 
         });
         collect(roots);
         setExpandedKeys(keys);
+        // The horizontal tree lays out left-to-right from a fixed origin, so a narrower
+        // result set is easy to miss if the container is still scrolled from a prior,
+        // larger result — reset to the top-left so the change is visible immediately.
+        horizontalTreeContainerRef.current?.scrollTo({ top: 0, left: 0 });
       } catch (error: any) {
         if (!cancelled) message.error(error.response?.data?.error || error.message);
       }
-    }, 300);
+    }, 120);
     return () => { cancelled = true; clearTimeout(timer); };
   }, [treeSearchText, viewMode, modelName, message]);
 
@@ -867,6 +876,11 @@ function ModelCatalog({ modelName, requestedSearch = null }: ModelCatalogProps) 
                   value={treeSearchText}
                   onChange={(event) => setTreeSearchText(event.target.value)}
                 />
+                {treeSearchText.trim() && treeSearchMatchCount !== null ? (
+                  <span style={{ color: '#64748b', fontSize: 12 }}>
+                    {treeSearchMatchCount === 0 ? 'No matches' : `${treeSearchMatchCount} match${treeSearchMatchCount === 1 ? '' : 'es'}`}
+                  </span>
+                ) : null}
                 <Button size="small" onClick={handleCollapseAll}>Collapse All</Button>
                 {treeLoading && <Spin size="small" />}
               </>

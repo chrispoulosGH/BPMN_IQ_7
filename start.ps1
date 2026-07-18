@@ -33,7 +33,7 @@ function Stop-ProcessOnPort {
 			Write-Host "[OK] Stopped existing $Name process (PID $processId) on port $Port." -ForegroundColor Yellow
 		}
 		catch {
-			Write-Host "[WARN] Could not stop $Name process (PID $processId) on port $Port: $($_.Exception.Message)" -ForegroundColor Yellow
+			Write-Host "[WARN] Could not stop $Name process (PID $processId) on port ${Port}: $($_.Exception.Message)" -ForegroundColor Yellow
 		}
 	}
 }
@@ -62,26 +62,19 @@ Ensure-YarnInstall -WorkingDirectory $PSScriptRoot
 Ensure-YarnInstall -WorkingDirectory (Join-Path $PSScriptRoot "server")
 Ensure-YarnInstall -WorkingDirectory (Join-Path $PSScriptRoot "client")
 
-# 4. Start server + client
+# 4. Start server + client in THIS console (foreground, streamed logs).
+#    Press Ctrl+C to stop both.
 Write-Host "[*] Starting Express server + Vite client..." -ForegroundColor Yellow
 
 Stop-ProcessOnPort -Port 3001 -Name "Express server"
 Stop-ProcessOnPort -Port 5173 -Name "Vite client"
 
-function Start-BackgroundYarnDev {
-	param(
-		[Parameter(Mandatory = $true)]
-		[string] $WorkingDirectory,
+Write-Host "[*] Streaming server + client logs below. Press Ctrl+C to stop both." -ForegroundColor Cyan
 
-		[Parameter(Mandatory = $true)]
-		[string] $Name
-	)
-
-	Start-Process -FilePath "cmd.exe" -ArgumentList @("/c", "yarn.cmd", "dev") -WorkingDirectory $WorkingDirectory -WindowStyle Hidden
-	Write-Host "[OK] Started $Name dev server in $WorkingDirectory" -ForegroundColor Green
+Push-Location $PSScriptRoot
+try {
+	& yarn.cmd dev
 }
-
-Start-BackgroundYarnDev -WorkingDirectory (Join-Path $PSScriptRoot "server") -Name "Express server"
-Start-BackgroundYarnDev -WorkingDirectory (Join-Path $PSScriptRoot "client") -Name "Vite client"
-
-Write-Host "[*] Dev servers launched. Keep this terminal open if you want to monitor startup logs." -ForegroundColor Cyan
+finally {
+	Pop-Location
+}

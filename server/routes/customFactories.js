@@ -2145,8 +2145,20 @@ router.get('/neighborhoods/:name/catalog', async (req, res) => {
   }
 });
 
+// Short-lived cache for loadCatalogForTree(): the tree/search endpoints are hit once per
+// keystroke while a user types in the tree search box, and re-fetching + recombining the
+// full model catalog from Mongo on every keystroke (rather than once per typing burst) is
+// what made that search feel like it wasn't updating live. Invalidated explicitly wherever
+// a model's rows/batches are mutated (see catalogTreeCache.delete calls below); the TTL is
+// just a safety net for any other write path.
+const catalogTreeCache = new Map(); // name -> { data, expiresAt }
+const CATALOG_TREE_CACHE_TTL_MS = 20000;
+
 // Helper: load a model + its combined rows and tuple columns for tree operations.
 async function loadCatalogForTree(name) {
+  const cached = catalogTreeCache.get(name);
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
+
   const model = await Model.findOne({ name }).lean();
   if (!model) return null;
   const db = mongoose.connection.db;
@@ -2155,7 +2167,9 @@ async function loadCatalogForTree(name) {
     .project({ rows: 1, name: 1, batchId: 1 })
     .toArray();
   const { allRows, finalColumns } = combineCatalogRows(model, batches);
-  return { model, allRows, tupleColumns: getTupleColumns(finalColumns) };
+  const data = { model, allRows, tupleColumns: getTupleColumns(finalColumns) };
+  catalogTreeCache.set(name, { data, expiresAt: Date.now() + CATALOG_TREE_CACHE_TTL_MS });
+  return data;
 }
 
 // Full hierarchy tree (with node-count guard). Falls back to lazy mode when too large.
@@ -2353,6 +2367,7 @@ router.delete('/neighborhoods/:name', requireAdminWrite, async (req, res) => {
       db.collection('dataComponentBatches').deleteMany({ neighborhoodName: name }),
       db.collection('canonicalcomponents').deleteMany({ neighborhoodName: name }),
     ]);
+    catalogTreeCache.delete(name);
 
     if ((deletedNeighborhood.deletedCount || 0) !== 1) {
       throw createValidationError(`Failed to delete model ${name}`, 500);
@@ -2393,6 +2408,7 @@ router.delete('/neighborhoods/:name/components', requireAdminWrite, async (req, 
       db.collection('canonicalcomponents').deleteMany({ neighborhoodName: name }),
       ComponentSearchIndex.deleteMany({ neighborhoodName: name }),
     ]);
+    catalogTreeCache.delete(name);
 
     return res.json({
       success: true,
@@ -2679,6 +2695,7 @@ router.post('/upload', requireAdminWrite, handleSpreadsheetUpload, async (req, r
         console.log(`[UPLOAD] Creating ${loadDomain} batch ${batchId} for ${uploadedFactory.componentType}/${uploadedFactory.name} with ${uploadedFactory.rows?.length || 0} rows`);
         const insertResult = await collection.insertOne(uploadedFactory);
         createdFactoryIds.push({ collection: batchCollectionName, id: insertResult.insertedId });
+        if (batchCollectionName === 'dataComponentBatches') catalogTreeCache.delete(neighborhoodName);
         
         // Register FK columns in the registry
         (uploadedFactory.foreignKeyColumns || []).forEach((fk) => {

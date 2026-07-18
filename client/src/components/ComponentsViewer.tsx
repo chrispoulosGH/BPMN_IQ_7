@@ -848,7 +848,8 @@ export default function ComponentsViewer({
     const normalized = searchText.toLowerCase();
 
     const filterNode = (node: DataNode): DataNode | null => {
-      const nodeText = String(node.title).toLowerCase();
+      const nodeData = (node as DataNode & { data?: { rowName?: string } }).data;
+      const nodeText = String(nodeData?.rowName ?? '').toLowerCase();
       const matches = nodeText.includes(normalized);
 
       const filteredChildren = node.children
@@ -1071,6 +1072,25 @@ export default function ComponentsViewer({
     const bgColors = ['#EFF6FF', '#F0FDF4', '#FEF3C7', '#FCE7F3', '#F3E8FF', '#ECFDF5'];
     const textColors = ['#0C63E4', '#15803D', '#B45309', '#BE185D', '#6D28D9', '#0891B2'];
 
+    // filteredTreeData keeps whole ancestor chains visible so a match stays reachable from the
+    // root, but that leaves the actual matching node indistinguishable from the path leading to
+    // it. Highlight the substring and ring the node so the real hit stands out from its ancestors.
+    const activeSearch = searchText.trim().toLowerCase();
+    const renderHighlightedValue = (text: string) => {
+      if (!activeSearch) return text;
+      const idx = String(text).toLowerCase().indexOf(activeSearch);
+      if (idx === -1) return text;
+      return (
+        <>
+          {String(text).substring(0, idx)}
+          <mark style={{ backgroundColor: '#ffd700', color: 'inherit', padding: 0, borderRadius: 2 }}>
+            {String(text).substring(idx, idx + activeSearch.length)}
+          </mark>
+          {String(text).substring(idx + activeSearch.length)}
+        </>
+      );
+    };
+
     interface PositionedNode {
       node: DataNode;
       depth: number;
@@ -1180,6 +1200,7 @@ export default function ComponentsViewer({
             
             const bgColor = bgColors[p.depth % bgColors.length];
             const textColor = textColors[p.depth % textColors.length];
+            const isSearchMatch = Boolean(activeSearch) && String(value).toLowerCase().includes(activeSearch);
 
             return (
               <button
@@ -1203,9 +1224,9 @@ export default function ComponentsViewer({
                   height: p.h,
                   overflow: 'hidden',
                   borderRadius: 8,
-                  border: isSelected ? '2px solid #0284c7' : `2px solid ${textColor}`,
+                  border: isSelected ? '2px solid #0284c7' : isSearchMatch ? '2px solid #d97706' : `2px solid ${textColor}`,
                   background: isSelected ? '#ecf0f5' : bgColor,
-                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)',
+                  boxShadow: isSearchMatch ? '0 0 0 3px rgba(217, 119, 6, 0.35), 0 2px 8px rgba(15, 23, 42, 0.06)' : '0 2px 8px rgba(15, 23, 42, 0.06)',
                   padding: '8px',
                   cursor: 'pointer',
                   display: 'grid',
@@ -1245,7 +1266,7 @@ export default function ComponentsViewer({
                       width: '100%',
                     }}
                   >
-                    {value}
+                    {renderHighlightedValue(String(value))}
                   </div>
                 </div>
                 {hasChildren && (
@@ -1331,15 +1352,6 @@ export default function ComponentsViewer({
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />
-            <Button size="small" onClick={() => {
-              const allKeys = filteredTreeData.flatMap((node) => {
-                const keys: React.Key[] = [node.key];
-                const collect = (n: DataNode) => { if (n.children) n.children.forEach((c) => { keys.push(c.key); collect(c); }); };
-                collect(node);
-                return keys;
-              });
-              setExpandedKeys(allKeys);
-            }}>Expand All</Button>
             <Button size="small" onClick={() => setExpandedKeys([])}>Collapse All</Button>
           </>
         ) : null}
